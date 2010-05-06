@@ -35,6 +35,50 @@ class MikeFlickr:
         fapi.testFailure(rsp)
         photoid = rsp.photoid[0].elementText
         return int(photoid)
+
+    def imagesByTag(self, tags, privateOnly=False):
+        fapi = self.fapi
+        page = 1
+        args = {'tags':str(tags),
+                'tag_mode':'all',       # "any" for OR or "all" for AND-type operation
+                'user_id':'me',
+                'page':str(page),
+                'per_page':str(400),
+                
+                'api_key':self.apiKey,
+                'auth_token':self.authToken
+                }
+
+#        if privateOnly:
+#            args['privacy_filter'] = 5
+
+        rtn = []
+
+        total = None
+        while True:
+            rsp = fapi.photos_search(**args)
+            self.raiseOnError(rsp)
+            fapi.testFailure(rsp)
+            print rsp,dir(rsp)
+            print rsp.attrib.items()
+            if total is None:
+                print rsp.photos[0].attrib
+                total = int(rsp.photos[0]['total'])
+                print "TOTAL",total
+            
+            for p in rsp.photos[0].photo:
+                rtn.append( (p['id'], p['title']) )
+
+            if total and len(rtn) == total:
+                return rtn
+            else:
+                print "total=",total
+                print "so far=",len(rtn)
+            page = page + 1
+            args['page'] = str(page)
+            
+        return rtn
+        
         
     def upload(self, filename, title='', description='', tags='', isPublic=False, isFriend=False, isFamily=False):
         """replace flickrapi's upload method with something useful"""
