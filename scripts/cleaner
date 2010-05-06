@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+#-*- mode:python -*-
+
+import sys
+import os
+
+if not len(sys.argv) == 2:
+    print "usage: %s <directory>" % sys.argv[0]
+    sys.exit(-1)
+
+
+reject = []
+for file in os.listdir('.'):
+
+    if file[-11:] == ".html.input":
+        print "accepted:",file
+        continue
+    
+    try:
+        num = int(file[:4])
+    except ValueError:
+        reject.append(file)
+        continue
+
+    if file[-4:] != 'jpeg':
+        reject.append(file)
+        continue
+
+    if file[-10:] == 'thumb.jpeg':
+        reject.append(file)
+        continue
+
+    if file[-10:] == 'small.jpeg':
+        reject.append(file)
+        continue
+    
+    print "accepted:",file
+
+print "delete the following files?"
+for x in reject:
+    print "  ",x
+
+while True:
+    print "delete the preceeding?"
+    inp = raw_input()
+    inp = inp.strip().lower()
+    if len(inp) and inp[0] == 'n':
+        print "okay, bailing."
+        sys.exit(0)
+
+    elif len(inp) and inp[0] == 'y':
+        for x in reject:
+            print "deleting",x
+            os.system( "rm %s" % x )
+        sys.exit(0)
+        

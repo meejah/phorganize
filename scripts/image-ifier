@@ -1,0 +1,121 @@
+#!/usr/bin/env python
+
+import os
+import sys
+from PIL import Image
+sys.path.insert(0,'/home/mike/projects/photo/src/')
+from Node import Node, SPECIAL
+
+MAGIC = '##IMAGES##'
+PICTURE = '##PICTURE##'
+LINKS = '##LINKS##'
+
+if not 'index.html.input' in os.listdir('.'):
+    print "require an index.html.input in the current directory"
+    sys.exit(0)
+    
+if not 'picture.html.input' in os.listdir('.'):
+    print "require a picture.html.input in the current directory"
+    sys.exit(0)
+
+PICTEMPLATE = open('picture.html.input','r').read()
+
+def makePictureHTML(filename, picturelink, linkshtml):
+    global PICTEMPLATE
+    idx0 = PICTEMPLATE.find(LINKS)
+    len0 = len(LINKS)
+    idx1 = PICTEMPLATE.find(PICTURE)
+    len1 = len(PICTURE)
+    if idx1 < idx0:
+        a = idx0
+        b = len0
+        idx0 = idx1
+        len0 = len1
+        idx1 = a
+        len1 = b
+        
+    out = open(filename,'w')
+    out.write(PICTEMPLATE[:idx0])
+    out.write(picturelink)              # fixme
+    out.write(PICTEMPLATE[idx0+len0:idx1])
+    out.write(linkshtml)                # fixme
+    out.write(PICTEMPLATE[idx1+len1:])
+    out.close()
+    
+
+things = []
+for file in os.listdir('.'):
+    if file[-12:] != '--thumb.jpeg':
+        print "skip:",file
+        continue
+    things.append(file)
+
+things.sort()
+
+pics = {}
+x = 10
+y = 130
+previous = None
+counter = 0
+while len(things):
+    file = things[0]
+    things = things[1:]
+    print file
+
+    height = 113
+    width = 150
+    try:
+        counter = int(file[:4]);
+    except ValueError:
+        counter = counter + 1
+    small = file[:-12] + '--small.jpeg'
+    big = file[:-12] + '.jpeg'
+    filename = file[:-12] + '.html'
+
+    image = Image.open(file)
+    (width,height) = image.size
+
+    image = Image.open(big)
+    bigstring = '%dx%d' % image.size
+
+    image = Image.open(small)
+    smallstring = '%dx%d' % image.size
+
+    print "previous for",filename,"is",previous
+    next = None
+    p = 'previous'
+    n = 'next'
+    if previous:
+        p = '<a href="%s">previous</a>' % previous
+    if len(things):
+        n = '<a href="%s">next</a>' % (things[0][:-12] + '.html',)
+    linkshtml = '%s :: <a href="index.html">top</a> :: %s' % (p,n)
+    pichtml = '<img src="%s" width="%d" height="%d" alt="[image]" />' % (small,image.size[0],image.size[1])
+
+    makePictureHTML(filename, pichtml, linkshtml)
+
+    pics[counter] = '<div style="position: absolute; left: %%dpx; top: %%dpx;" id="image_%04d" class="portrait"><a href="%s"><img src="%s" height="%d" width="%d"></a><br /><a href="%s">%s</a></a></div>' % (counter, filename, file, height, width,filename,smallstring)
+    ##pics[counter] = '<div style="position: absolute; left: %%dpx; top: %%dpx;" id="image_%04d" class="portrait"><a href="javascript:showimage(\'%s\', \'%s\');"><img src="%s" height="%d" width="%d"></a><a href="%s">%s</a>,&nbsp;<a href="%s">%s</a></div>' % (counter, small, big, file, height, width,small,smallstring,big,bigstring)
+    previous = filename
+
+keys = pics.keys()
+keys.sort()
+emit = ''
+for key in keys:
+    emit = emit + pics[key] % (x,y)
+    x = x + 180
+    if x+width+20 > (1024-100):
+        x = 10
+        y = y + 200
+
+emit = emit + '<div style="height: %dpx; width: 2px; position:absolute; left:0px; top:0px;"></div>'  %(y+400)
+
+data = open('index.html.input','r').read()
+idx = data.find(MAGIC)
+print "IDX:",idx
+
+out =open('index.html','w')
+out.write(data[:idx])
+out.write(emit)
+out.write(data[idx+len(MAGIC):])
+out.close()

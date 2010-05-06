@@ -1,0 +1,87 @@
+-*- mode: outline -*-
+
+* overview
+
+ideas for something to grab pictures from my camera and put them in
+appropriate places, rather like the album ripping stuff. general ideas
+for structure:
+
+
+* structure I
+
+** ~/multimedia/photographs/YEAR/MM/DD/###.jpeg
+
+where ### is the picture-number. that is, all pictures downloaded on a
+certain day would go into that day's folder. this would be the
+canonical name of the photo.
+
+also in here could be files like:
+
+###.caption -- containing the caption, obviously
+###.blurb -- containing a story about the picture
+###.thumb.jpeg -- thumbnail
+
+then, the following symbolic-link structures would be set up:
+
+** ~/multimedia/photographs/albums/nice-album-name/### -> ../../../YEAR/MM/DD/###
+
+so each picture-rip would then give one the opportunity to put things
+into albums. as in, it would say, for each picture, "give me an album
+name" and default to the last-entered album-name. each album would
+have a numberically increasing list of files pointing to particular
+canonical pictures.
+
+these could also have ###.blurb files, which would describe the entire
+album.
+
+** ~/multimedia/photographs/keyword/some-keyword/### -> ../../albums/nice-album-name
+
+* structure II
+
+second idea for structure of the data, based mostly on SGML
+metadata. this has the advantage of being able to add stuff easily
+(although so does the other scheme, sort of). this does keep all the
+metadata contained and keeps file-clutter to a minimum, i guess.
+
+** ~/multimedia/photographs/YEAR/MM/DD/###.jpeg
+
+where ### is the picture-number. that is, all pictures downloaded on a
+certain day would go into that day's folder. this would be the
+canonical name of the photo.
+
+then, there could be a "database" of SGML files (i.e. like my Web
+site) containing all the relevant metadata.
+
+this directory could also have things like ###.sgml with relevant
+metadata for this particular photograph (i.e. all the EXIF data, plus
+hand-entered description and so forth).
+
+** ~/multimedia/photographs/metadata/albums/album-name.sgml
+
+contains some sort of SGML for an entire album, including
+descriptions, etc.
+
+
+* DTD?
+
+possible DTD for picture meta-data:
+
+<picture>
+  <canonical_path>/home/mike/multimedia/pictures/2003/10/02/000.jpeg</canonical_path>
+  <date>October 2, 2003</date>
+
+  <!-- EXIF stuff; lots to choose from -- let's see what the G1
+       produces. i could just dump it all into a single <exif />
+       tag... -->
+
+  <title>Hand-Entered Title</title>
+  <category>category0</category>
+  <category>category1</category>
+
+  <keyword></keyword>
+  <keyword></keyword>
+
+  <album>album title 0</album>
+  <album>album title 1</album>
+
+</picture>

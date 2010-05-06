@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+#-*- mode:python -*-
+
+from PIL import Image
+import sys
+import os
+import struct
+
+
+if len(sys.argv) != 2:
+    print "usage:",sys.argv[0],"<directory>"
+
+directory = os.path.abspath(sys.argv[1])
+ENDINGS = ['.jpg', '.jpeg']
+THUMBSIZE = 100
+html = ''
+
+for file in os.listdir(directory):
+    path = os.path.join(directory,file)
+    (name,extension) = os.path.splitext(path)
+    if extension.lower() not in ENDINGS:
+        continue
+    print path
+
+    image = Image.open(path)
+    image.thumbnail( (THUMBSIZE,THUMBSIZE), Image.ANTIALIAS )
+    savename = name + '--thumb' + extension
+    image.save( savename )
+
+    html = html + '<a href="%s"><img src="%s" /></a>\n' % (name.split('/')[-1],savename.split('/')[-1])
+
+out = open("thumbs.html","w")
+out.write('''
+<html>
+<body>
+''')
+out.write(html)
+out.write('''
+</body>
+</html>''')
+

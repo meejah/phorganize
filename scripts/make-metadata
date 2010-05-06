@@ -1,0 +1,88 @@
+#!/usr/bin/env python
+#-*-mode:python-*-
+
+
+##
+## MW: september, 2005: this is intended to make a file called
+## META.xml which will contain all the metadata for a directory of
+## images
+##
+
+
+import sys
+import os
+from xml.sax.handler import ContentHandler
+import xml.sax
+sys.path.insert(0,'/home/mike/projects/photo/src/')
+from Node import Node, SPECIAL
+
+directory = '.'
+
+if len(sys.argv) == 2:
+    directory = sys.argv[1]
+elif len(sys.argv) > 2:
+    print "usage: %s [directory]" % sys.argv[0]
+    sys.exit(-1)
+
+
+
+
+
+print 'Meta-dataing directory "%s"' % directory
+
+metadata = {}
+metafile = os.path.join(directory,'META.xml')
+if os.path.isfile(metafile):
+    nodedata = open(metafile,'r').read().split('<picture>')
+    for x in nodedata:
+        x = x.strip()
+        data = '<picture>\n  ' + x
+        if len(x) == 0:
+            continue
+        try:
+            n = Node(metafile, data)
+            metadata[n.filename] = n
+        except xml.sax._exceptions.SAXParseException:
+            print "PARSE ERROR on"
+            print data
+
+
+
+allattrs = []
+for x in os.listdir(directory):
+    if x[-3:].lower() != 'jpg' and x[-4:].lower() != 'jpeg':
+        continue
+    print x
+    attrs = {}
+    for attr in SPECIAL:
+        if attr == 'filename':
+            attrs['filename'] = x
+            continue
+        default = None
+        if metadata.has_key(x):
+            md = metadata[x]
+            default = getattr(md,attr)
+
+        if default:
+            prompt = "  "+attr+" [\"%s\"]: " % str(default)
+        else:
+            prompt = "  "+attr+": "
+        stuff = raw_input(prompt)
+        if len(stuff.strip()) == 0:
+            stuff = default
+        attrs[attr] = stuff
+    allattrs.append(attrs)
+
+
+output = open('META.xml','w')
+for attrs in allattrs:
+    output.write('<picture>\n')
+    for (k,v) in attrs.items():
+        if v is None: v = ''
+        output.write('  <%s>%s</%s>\n' % (k,v,k))
+    output.write('</picture>\n\n')
+output.close()
+    
+    
+    
+    

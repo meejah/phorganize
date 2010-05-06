@@ -1,0 +1,127 @@
+#!/usr/bin/env python
+
+import sys
+import os
+import string
+
+
+def nicify(s):
+    s = s.lower()
+    rtn = ''
+    for x in s:
+        if x in string.lowercase or x in string.digits:
+            rtn = rtn + x
+        elif len(rtn) and rtn[-1] != '-':
+            rtn = rtn + '-'
+    return rtn
+
+if len(sys.argv) < 2:
+    print "using current directory"
+    dir = os.curdir
+else:
+    dir = os.path.dirname(sys.argv[1])
+    print "looking for images in:",dir
+
+images = []
+for image in os.listdir(dir):
+    (name,ext) = os.path.splitext(image)
+    if ext == '.JPG' and name[:3] == 'IMG':
+        images.append(os.path.join(dir,image))
+    else:
+        print "  rejected:",image
+
+
+print "date of album:"
+date = raw_input()
+print "name of album:"
+name = raw_input()
+print "base tags for all images:"
+basetags = raw_input().strip()
+
+date = nicify(date)
+name = nicify(name)
+
+prefix = "%s--%s"%(date,name)
+
+targetdir = os.path.expanduser("~/photos/%s"%prefix)
+
+print "target:",targetdir
+print len(images),"images to process"
+
+cmd = "mkdir %s" % targetdir
+print cmd
+os.system(cmd)
+
+number = 0
+for image in images:
+    print image
+    thumb = '/tmp/thumb.jpeg'
+    print "  making thumnail"
+    cmd = 'convert -resize 400x400 %s %s' % (image,thumb)
+    print cmd
+    os.system(cmd)
+
+    cmd = "xli %s" % thumb
+    os.system(cmd)
+    print "name of picture (RTN to skip):"
+    name = raw_input()
+    if len(name.strip()) == 0:
+        print "skipping..."
+        continue
+
+    print "meta-data:"
+    print "  tags (\"%s\" plus:):" % basetags
+    tags = raw_input().strip()
+    tags = basetags + ' ' + tags
+    tags = tags.strip()
+    if 0:
+        print "  caption:"
+        caption = raw_input().strip()
+    else:
+        caption = name
+    print "Public?"
+    public = raw_input().strip()
+    while len(public) == 0 or (public.lower()[0] != 'y' and public.lower()[0] != 'n'):
+        print "Public (y or n)?"
+        public = raw_input().strip()
+    if public.lower()[0] == 'y':
+        public = True
+    else:
+        public = False
+    print "  description (blank line to end):"
+    description = ''
+    d = raw_input().strip()
+    while len(d):
+        description = description + '    ' + d + '\n'
+        d = raw_input().strip()
+
+
+    name = nicify(name)
+    photopath = '%s/%04d--%s.jpeg'%(targetdir,number,name)
+
+    meta = '''<meta>
+  <photo>%(photo)s</photo>
+  <tags>%(tags)s</tags>
+  <caption>%(caption)s</caption>
+  %(public)s
+  <description>
+%(description)s  </description>
+</meta>
+''' % {'photo':photopath,
+       'caption':caption,
+       'tags':tags,
+       'description':description,
+       'public':public and '<public>yes</public>' or '<private>yes</private>'
+       }
+
+    print meta
+
+    cmd = "cp %s %s" % (image,photopath)
+    print cmd
+    os.system(cmd)
+    metaname = '%s/%04d--%s.sgml'%(targetdir,number,name)
+    print 'writing "%s"...'%metaname
+    f = open(metaname,'w')
+    f.write(meta)
+    f.close()
+    number = number + 1

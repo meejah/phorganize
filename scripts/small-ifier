@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+#-*- mode:python -*-
+
+from PIL import Image
+import sys
+import os
+import struct
+
+
+if len(sys.argv) != 2:
+    print "usage:",sys.argv[0],"<directory>"
+
+directory = os.path.abspath(sys.argv[1])
+ENDINGS = ['.jpg', '.jpeg']
+THUMBSIZE = 1024
+PANOSIZE = 1600
+
+for file in os.listdir(directory):
+    if file[-12:] == '--thumb.jpeg':
+        print "skip:",file
+        continue
+    
+    path = os.path.join(directory,file)
+    (name,extension) = os.path.splitext(path)
+    if extension.lower() not in ENDINGS:
+        continue
+    print path
+
+    image = Image.open(path)
+    (width,height) = image.size
+    if float(width)/float(height) > 2.0:
+        image.thumbnail( (PANOSIZE,PANOSIZE), Image.ANTIALIAS )
+    else:
+        image.thumbnail( (THUMBSIZE,THUMBSIZE), Image.ANTIALIAS )
+    image.save( name + '--small' + extension )
+
+

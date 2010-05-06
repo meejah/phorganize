@@ -1,0 +1,251 @@
+#!/usr/bin/env python
+#-*- mode:python -*-
+
+from Xlib import X, display, Xutil
+from PIL import Image
+import sys
+import os
+import struct
+from StringIO import StringIO
+import time
+
+
+if len(sys.argv) != 2:
+    print "usage:",sys.argv[0],"<directory>"
+
+directory = os.path.abspath(sys.argv[1])
+ENDINGS = ['.jpg', '.jpeg']
+WIDTH = 1024/4
+HEIGHT = 768/4
+
+class Window:
+    def __init__(self, display, path):
+	self.display = display
+        self.options = {
+            'display-on-root': False,
+            'rows-first': True
+            }
+        self.font = self.display.open_font( '-*-day roman-*-*-*-*-17-*-*-*-*-*-*-*' )
+        if not self.font:
+            self.font = self.display.open_font( '-*-utopia-*-*-*-*-17-*-*-*-*-*-*-*' )
+
+        self.redbox = RedBox(self)
+        self.path = path
+
+
+	# Find which screen to open the window on
+	self.screen = self.display.screen()
+
+        if self.options['display-on-root']:
+            self.window = self.screen.root
+
+        else:
+            print "depth:",self.screen.root_depth
+            self.window = self.screen.root.create_window(
+                50, 50, WIDTH, HEIGHT, 2,
+                self.screen.root_depth,
+                X.InputOutput,
+                X.CopyFromParent,
+                )
+
+        self.window.change_attributes( 
+	    background_pixel = self.screen.white_pixel,
+	    event_mask = (X.ExposureMask |
+			  X.StructureNotifyMask |
+			  X.ButtonPressMask |
+			  X.ButtonReleaseMask |
+                          X.PointerMotionMask |
+                          X.KeyPressMask | 
+			  X.Button1MotionMask |
+                          X.EnterWindowMask |
+                          X.LeaveWindowMask ),
+	    colormap = X.CopyFromParent
+	    )
+        
+	self.gc = self.window.create_gc(
+	    foreground = self.screen.black_pixel,
+	    background = self.screen.white_pixel#,
+#            font = self.font
+	    )
+        self.erasegc = self.window.create_gc(
+	    background = self.screen.black_pixel,
+	    foreground = self.screen.white_pixel,
+	    )
+
+        self.buffer = self.window.create_pixmap( WIDTH, HEIGHT, self.screen.root_depth )
+
+        ## set up image
+
+        self.image = self.window.create_pixmap( WIDTH, HEIGHT, 16 )
+        art = Image.open(self.path).resize((WIDTH,HEIGHT),Image.ANTIALIAS)
+        data = art.tostring( 'raw', 'RGBX' )
+        tmp = StringIO()
+        for point in range(0,WIDTH*HEIGHT*4,4):
+            #(convert to 5 bits red, 6 bits green, 5 bits blue for two bytes total)
+            d = data[point:point+4]
+            if len(d) == 0:
+                continue
+            (raw,) = struct.unpack( "I", d )
+            r = raw & 0xff
+            g = (raw >> 8) & 0xff
+            b = (raw >> 16) & 0xff
+
+            r = r >> 3
+            g = g >> 2                 # green gets 6 bits, not 5
+            b = b >> 3
+            byte0 = (r << 3) | (g >> 3)
+            byte1 = ((g&0x7) << 5) | b
+            tmp.write( struct.pack( "BB", byte1, byte0 ) )
+        self.pixmap = tmp.getvalue()
+        tmp.close()
+        
+
+	# Set some WM info
+
+	self.WM_DELETE_WINDOW = self.display.intern_atom('WM_DELETE_WINDOW')
+	self.WM_PROTOCOLS = self.display.intern_atom('WM_PROTOCOLS')
+	
+	self.window.set_wm_name('photo')
+	self.window.set_wm_icon_name('photo')
+	self.window.set_wm_class('mike', 'photo')
+
+	self.window.set_wm_protocols([self.WM_DELETE_WINDOW])
+	self.window.set_wm_hints(flags = Xutil.StateHint,
+				 initial_state = Xutil.NormalState)
+
+	self.window.set_wm_normal_hints(flags = (Xutil.PPosition | Xutil.PSize
+						 | Xutil.PMinSize),
+					min_width = 20,
+					min_height = 20)
+	
+	# Map the window, making it visible
+	self.window.map()
+
+    def redraw(self):
+        #self.buffer.fill_rectangle( self.erasegc, 0, 0, WIDTH, HEIGHT )
+
+        self.buffer.put_image( self.gc,
+                              0,0,
+                              WIDTH, HEIGHT,
+                              X.ZPixmap,
+                              16,
+                              0,
+                              self.pixmap )
+
+
+        self.redbox.draw(self.buffer)
+        
+        self.window.copy_area( self.gc,
+                               self.buffer,
+                               0, 0,
+                               WIDTH, HEIGHT,
+                               0, 0 )
+
+
+    def animationLoop(self):
+        pass
+
+    # Main loop, handling events
+    def loop(self):
+        self.pointerInside = True
+        self.__done = False
+	while not self.__done:
+            self.animationLoop()
+            if self.pointerInside:
+                self.redraw()
+                
+            while self.display.pending_events():
+                self.processEvent(self.display.next_event())
+            time.sleep(0.05)
+
+
+    def processEvent(self,e):
+        # Window has been destroyed, quit
+        if e.type == X.DestroyNotify:
+            sys.exit(0)
+
+        if e.type == X.EnterNotify:
+            self.pointerInside = True
+        if e.type == X.LeaveNotify:
+            pass
+            #self.pointerInside = False
+
+        # Left button pressed, start to draw
+        if e.type == X.KeyPress:
+            print "KEY DETAIL:",e.detail
+            self.window.unmap()
+            self.__done = True
+            
+        if e.type == X.ButtonPress:
+            self.redbox.down(e.detail)
+        
+        if e.type == X.ButtonRelease:
+            self.redbox.up(e.detail)
+
+        # Mouse movement with button pressed, draw 
+        if e.type == X.MotionNotify:
+            self.redbox.position(e.event_x,e.event_y)
+
+        if e.type == X.ClientMessage:
+            if e.client_type == self.WM_PROTOCOLS:
+                fmt, data = e.data
+                if fmt == 32 and data[0] == self.WM_DELETE_WINDOW:
+                    self.window.unmap()
+                    self.__done = True
+
+class RedBox:
+    def __init__(self, win):
+	self.win = win
+        self.x = 0
+        self.y = 0
+        self.width = 200
+        self.state = 'fixed'
+
+    def down(self,button):
+        if self.state == 'fixed' and button == 1:
+            self.state = 'move'
+        if self.state == 'fixed' and button == 3:
+            self.state = 'resize'
+
+    def up(self,button):
+        if self.state != 'fixed':
+            self.state = 'fixed'
+            
+    def position(self,x,y):
+        if self.state == 'fixed':
+            return
+        if self.state == 'resize':
+            self.width = x
+            if self.x+self.width > WIDTH:
+                self.width = WIDTH-self.x
+            if self.y+int(self.width/2) > HEIGHT:
+                self.width = (HEIGHT-int(self.width/2))*2
+            return
+        
+        self.x = x-100
+        self.y = y-50
+        if self.x+self.width > WIDTH:
+            self.x = WIDTH-self.width
+        if self.y+int(self.width/2) > HEIGHT:
+            self.y = HEIGHT - int(self.width/2)
+        if self.y < 0:
+            self.y = 0
+        if self.x < 0:
+            self.x = 0
+        
+    def draw(self,buffer):
+        buffer.rectangle( self.win.gc,
+                               self.x, self.y,
+                               self.width, int(self.width/2))
+
+        
+for file in os.listdir(directory):
+    path = os.path.join(directory,file)
+    (name,extension) = os.path.splitext(path)
+    if extension.lower() not in ENDINGS:
+        continue
+    print path
+
+    Window(display.Display(), path).loop()
+
+

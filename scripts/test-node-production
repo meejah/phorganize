@@ -1,0 +1,9 @@
+#!/usr/bin/env python2.2
+
+import sys
+sys.path.insert(0,'/home/mike/projects/photo/src')
+
+
+from Node import Node
+
+node = Node()
