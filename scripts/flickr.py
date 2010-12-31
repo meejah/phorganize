@@ -64,16 +64,12 @@ class MikeFlickr:
             if total is None:
                 print rsp.photos[0].attrib
                 total = int(rsp.photos[0]['total'])
-                print "TOTAL",total
             
             for p in rsp.photos[0].photo:
                 rtn.append( (p['id'], p['title']) )
 
             if total and len(rtn) == total:
                 return rtn
-            else:
-                print "total=",total
-                print "so far=",len(rtn)
             page = page + 1
             args['page'] = str(page)
             

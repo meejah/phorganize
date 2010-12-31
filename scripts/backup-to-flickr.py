@@ -29,7 +29,7 @@ existing = mikeapi.imagesByTag("mikebackup", privateOnly=True)
 print "got",len(existing),"existing photos."
 
 names = map(lambda x: x[1].lower(), existing)
-print names[:10]
+#print names[:10]
 
 ##
 ## now, upload everything on the command line (unless we have already
@@ -53,7 +53,7 @@ for jpeg in sys.argv[1:]:
     toupload.append(jpeg)
 
 print "found",len(toupload),"images to upload."
-print toupload
+#print toupload
 
 for jpeg in toupload:
     print "uploading",jpeg,
