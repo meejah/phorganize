@@ -53,8 +53,8 @@ then, there could be a "database" of SGML files (i.e. like my Web
 site) containing all the relevant metadata.
 
 this directory could also have things like ###.sgml with relevant
-metadata for this particular photograph (i.e. all the EXIF data, plus
-hand-entered description and so forth).
+metadata for this particular photograph. don't duplicate exif data
+though...
 
 ** ~/multimedia/photographs/metadata/albums/album-name.sgml
 
@@ -69,10 +69,6 @@ possible DTD for picture meta-data:
 <picture>
   <canonical_path>/home/mike/multimedia/pictures/2003/10/02/000.jpeg</canonical_path>
   <date>October 2, 2003</date>
-
-  <!-- EXIF stuff; lots to choose from -- let's see what the G1
-       produces. i could just dump it all into a single <exif />
-       tag... -->
 
   <title>Hand-Entered Title</title>
   <category>category0</category>
