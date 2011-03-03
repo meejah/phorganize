@@ -20,8 +20,7 @@ for line in sub.communicate()[0].split('\n'):
     line = line.strip()
     if len(line) == 0 or line[0] != '#':
         continue
-    vals = line.split()
-    files.append(vals[1].strip())
+    files.append(line.split()[1].strip())
 
 for f in files:
     if f[-3:] != 'JPG':

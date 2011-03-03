@@ -7,8 +7,8 @@ sys.path.insert(0,'/home/mike/python')
 from flickrapi import FlickrAPI
 from flickr import MikeFlickr
 
-flickrAPIKey = "a0de8ce59dde838ba49666288023d23a"  # API key
-flickrSecret = "2e738d4a1f82c483"                  # shared "secret"
+flickrAPIKey = open('/home/mike/flickr.key', 'r').read()
+flickrSecret = open('/home/mike/flickr.secret', 'r').read()
 
 fapi = None
 fapi = FlickrAPI(flickrAPIKey, flickrSecret)
