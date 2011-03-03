@@ -2,6 +2,9 @@
 
 import sys
 import os
+import tempfile
+import shutil
+import pyexiv2
 sys.path.insert(0,'/home/mike/python')
 
 from flickrapi import FlickrAPI
@@ -47,6 +50,8 @@ for jpeg in sys.argv[1:]:
 
 print "found",len(toupload),"images to upload."
 
+tmpdir = tempfile.mkdtemp()
+
 for jpeg in toupload:
     print jpeg
     while True:
@@ -69,18 +74,36 @@ for jpeg in toupload:
             sys.stdout.flush()
 
             try:
-                photoid = mikeapi.upload(jpeg,
+                tmpjpeg = os.path.join(tmpdir,os.path.split(jpeg)[-1])
+                shutil.copyfile(jpeg, tmpjpeg)
+                md = pyexiv2.Image(tmpjpeg)
+                md.readMetadata()
+
+                for k in ['Exif.Photo.DateTimeDigitized',
+                          'Exif.Photo.DateTimeOriginal',
+                          'Exif.Image.DateTime']:
+                    try:
+                        del md[k]
+                    except:
+                        print "already gone:",k
+
+                md.writeMetadata()
+                photoid = mikeapi.upload(tmpjpeg,
                                          title=name,
                                          description=desc,
                                          tags=tags,
                                          isPublic=True,
                                          isFriend=False,
                                          isFamily=False)
+                os.unlink(tmpjpeg)
                 print "done; id=",photoid
             except:
                 print "ERROR"
+                raise
 
             break
 
         else:
             print "trying again"
+
+shutil.rmtree(tmpdir)
