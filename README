@@ -1,0 +1,20 @@
+This is just a collection of scripts I use to "organize" and play with
+my photos (and video). Perhaps they will be useful to you also.
+
+I'm currently transitioning a few things and don't have an
+eeezee-to-use catorizing thing, but the basic idea is that I suck all
+my photos into "somewhere" and then categorize them (e.g. using
+xli/feh and "mv"), after which I edit the good ones.
+
+"Categorize" means moving them into a folder like
+~/photos/INCOMING/june-15-2011--some-sort-of-trip and if I edit
+anything it goes from IMG_1234.JPG to IMG_1234-adjusted-cropped.JPG or
+similar.
+
+I also have been backing up nearly everything to flickr (as "private"
+photos which nobody can see). To use any of the flickr stuff, you'll
+need an API key (see their site for details).
+
+No time has been spent cleaning this up except to make sure I'm not
+giving away passwords, I just figured someone might find it useful so
+a "git push" somewhere wouldn't hurt.
