@@ -19,6 +19,6 @@ outfname = sys.argv[2]
 
 print "rescaling video %s writing to %s" % (infname, outfname)
 
-cmd = 'mencoder "%s" -oac copy -ovc lavc -lavcopts vcodec=mpeg4:mbd=2:trell -vf scale=640:360 -o "%s"' % (infname, outfname)
+cmd = 'mencoder "%s" -oac lavc -lavcopts "acodec=libmp3lame" -ovc lavc -lavcopts "vcodec=mpeg4:mbd=2:trell" -vf scale=640:360 -o "%s"' % (infname, outfname)
 print cmd
 os.system(cmd)
