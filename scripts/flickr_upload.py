@@ -81,7 +81,10 @@ for jpeg in toupload:
 
                 for k in ['Exif.Photo.DateTimeDigitized',
                           'Exif.Photo.DateTimeOriginal',
-                          'Exif.Image.DateTime']:
+                          'Exif.Image.DateTime',
+                          'Exif.Manufacturer',
+                          'Exif.Model'
+                          ]:
                     try:
                         del md[k]
                     except:
