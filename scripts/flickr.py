@@ -105,7 +105,7 @@ class MikeFlickr:
         return
 
     def isErrorResponse(self,rsp):
-        if rsp['stat'] == 'fail':
+        if rsp and rsp['stat'] == 'fail':
             return int(rsp.err[0]['code'])
         return False
     def raiseOnError(self,rsp):

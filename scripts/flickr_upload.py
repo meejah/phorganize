@@ -76,11 +76,14 @@ for jpeg in toupload:
             try:
                 tmpjpeg = os.path.join(tmpdir,os.path.split(jpeg)[-1])
                 shutil.copyfile(jpeg, tmpjpeg)
-                md = pyexiv2.Image(tmpjpeg)
-                md.readMetadata()
+                md = pyexiv2.ImageMetadata(tmpjpeg)
+                md.read()
 
+                md['Exif.Image.Copyright'] = 'mike warren'
                 for k in ['Exif.Photo.DateTimeDigitized',
                           'Exif.Photo.DateTimeOriginal',
+                          'Exif.Image.Make',
+                          'Exif.Image.Model',
                           'Exif.Image.DateTime',
                           'Exif.Manufacturer',
                           'Exif.Model'
@@ -90,7 +93,7 @@ for jpeg in toupload:
                     except:
                         print "already gone:",k
 
-                md.writeMetadata()
+                md.write()
                 photoid = mikeapi.upload(tmpjpeg,
                                          title=name,
                                          description=desc,
