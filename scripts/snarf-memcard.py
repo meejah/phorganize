@@ -16,6 +16,7 @@ for line in subprocess.Popen('dmesg | tail', stdout=subprocess.PIPE, shell=True)
         mount_target = m.group(1)
 if mount_target:
     mount = tempfile.mkdtemp()
+    print "trying to mount",mount_target,mount
     subprocess.call('mount /dev/%s %s' % (mount_target, mount))
 else:
     mount = '/mnt/foo'
@@ -33,6 +34,8 @@ files = filter(lambda x: 'THM' not in x, files)
 
 for f in files:
     subprocess.call('cp %s %s' % (os.path.join(base,f), '/home/mike/photos-canon'), shell=True)
+    subprocess.call('chown mike %s' % (os.path.join('/home/mike/photos-canon', f)), shell=True)
+    subprocess.call('chgrp mike %s' % (os.path.join('/home/mike/photos-canon', f)), shell=True)
     print f
         
 print "rotating all downloaded photos"

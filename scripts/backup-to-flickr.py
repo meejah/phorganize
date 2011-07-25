@@ -17,7 +17,7 @@ if len(sys.argv) < 2:
     print "usage: %s JPEG [JPEG]" % sys.argv[0]
     sys.exit(-1)
 
-token = fapi.getToken(browser="lynx",perms="delete")
+token = fapi.getToken(browser="lynx")
 mikeapi = MikeFlickr(fapi,flickrAPIKey,token)
 
 ##
